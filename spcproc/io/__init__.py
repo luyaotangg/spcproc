@@ -1,5 +1,3 @@
-# spcproc/io/__init__.py
-
 from .loader import (
     load_sample_csv,
     load_sample_df,

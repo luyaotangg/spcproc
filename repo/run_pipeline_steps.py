@@ -1,5 +1,3 @@
-# repo/run_steps_oop.py
-
 from pathlib import Path
 import pandas as pd
 import numpy as np
@@ -11,14 +9,11 @@ from spcproc.config import BaselineConfig, BlankConfig
 
 
 DATA_DIR = Path("data")
-OUT_DIR = Path("py_steps")   # 输出目录（新的）
+OUT_DIR = Path("py_steps")   # Output path
 
 OUT_DIR.mkdir(exist_ok=True, parents=True)
 
 
-# -------------------------------------------------------------------
-# 通用画图函数：基本沿用你之前的 plot_step
-# -------------------------------------------------------------------
 def plot_step(
     df: pd.DataFrame,
     outdir: Path,
@@ -29,12 +24,6 @@ def plot_step(
     ylim=None,
     y_label: str = "Absorbance",
 ):
-    """
-    df: 含 'Wavenumber' 的 DataFrame
-    outdir: 输出目录（Path）
-    filename: 保存文件名（字符串）
-    cols: 要画的样本列（不含 Wavenumber），默认前 5 条
-    """
     if "Wavenumber" not in df.columns:
         raise ValueError("DataFrame must contain 'Wavenumber' column.")
 
@@ -71,18 +60,15 @@ def plot_step(
     plt.close()
 
 
-# -------------------------------------------------------------------
-# 主流程：只跑一个场景（orig, 全分辨率），但导出 step01–step11
-# -------------------------------------------------------------------
+
 def main():
     scenario_name = "orig"
     scenario_dir = OUT_DIR / scenario_name
     scenario_dir.mkdir(exist_ok=True, parents=True)
 
-    # ---------- 读原始 PSI 光谱 ----------
     psi_raw = pd.read_csv(DATA_DIR / "FTIR_raw_spectra.csv")
 
-    # Step 01: 原始 PSI 光谱
+    # Step 01: raw PSI spectrum
     psi_raw.to_csv(
         scenario_dir / f"step01_raw_PSI_spectra_{scenario_name}.csv",
         index=False,
@@ -94,8 +80,7 @@ def main():
         title=f"Step 01 ({scenario_name}): Raw spectra",
     )
 
-    # ---------- Baseline 部分：使用新的 BaselineCorrector ----------
-    base_cfg = BaselineConfig()          # 使用默认 zero_wn / stitch_bounds
+    base_cfg = BaselineConfig()          # Use default zero_wn and stitch_bounds
     bc = BaselineCorrector(config=base_cfg)
     base_result = bc.run(psi_raw)
 
@@ -104,7 +89,7 @@ def main():
     baselined = base_result["baselined_spectra"]
     baselined_norm = base_result["baselined_spectra_stitched_normalized"]
 
-    # Step 02–05：写 CSV + 画图（文件名尽量和旧脚本对齐）
+    # Step 02–05：Write CSV and plot
     zero_shifted.to_csv(
         scenario_dir / f"step02_zero_shifted_spectra_{scenario_name}.csv",
         index=False,
@@ -149,7 +134,7 @@ def main():
         ylim=(-0.5, 2),
     )
 
-    # ---------- Blank 部分：使用新的 BlankProcessor ----------
+
     blank_raw = pd.read_csv(
         DATA_DIR / "Blank_baselinecorrected_filter_spectrum.csv"
     )
@@ -162,7 +147,7 @@ def main():
     low = bp.low_blank
     mid = bp.mid_blank
 
-    # Step 07–10：写 CSV + 图
+    # Step 07–10：Write CSV and plot
     blank_proc.to_csv(
         scenario_dir / f"step07_blank_processed_{scenario_name}.csv",
         index=False,
@@ -213,7 +198,7 @@ def main():
         y_label="Absorbance",
     )
 
-    # ---------- Step 11：blank subtraction（和你原来一样，用未 normalized 的 baselined_spectra） ----------
+    # Step 11：blank subtraction
     final = bp.subtract(baselined)
 
     final.to_csv(
