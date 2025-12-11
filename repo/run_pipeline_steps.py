@@ -30,7 +30,6 @@ def plot_step(
     outdir.mkdir(exist_ok=True, parents=True)
     savepath = outdir / filename
 
-    # 选择要画的列
     if cols is None:
         all_cols = [c for c in df.columns if c != "Wavenumber"]
         cols = all_cols[: min(5, len(all_cols))]
