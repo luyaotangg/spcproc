@@ -31,7 +31,7 @@ class FTIRPipeline:
 
         # 1. Baseline correction
         base_result = self.baseline.run(sample_df)
-        baselined_norm = base_result["baselined_spectra_stitched_normalized"]
+        baselined_for_blank = base_result["baselined_spectra"]
 
         output = {"baseline": base_result}
 
@@ -45,7 +45,7 @@ class FTIRPipeline:
                 config=self.blank_config,
             )
 
-            blank_corrected = blank_processor.subtract(baselined_norm)
+            blank_corrected = blank_processor.subtract(baselined_for_blank)
 
             output["blank"] = {
                 "blank_processed": blank_processor.blank_processed,
