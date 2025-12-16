@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 from unittest.mock import MagicMock
 
-from spcproc.core. pipeline import FTIRPipeline
+from spcproc.core.pipeline import FTIRPipeline
 
 # ----------------------------------------------------------------------
 # Fixtures & Helpers
@@ -43,8 +43,7 @@ def test_pipeline_baseline_only_wiring(dummy_df):
     
     # Setup what .run() returns (must include BOTH keys now)
     mock_return = {
-        "baselined_spectra":  dummy_df. copy(),  # ← 添加这个! 
-        "baselined_spectra_stitched_normalized": dummy_df.copy(),
+        "baselined_spectra":  dummy_df. copy(), 
         "original_spectra": dummy_df.copy(),
         "background_spectra": dummy_df. copy()
     }
@@ -81,7 +80,6 @@ def test_pipeline_with_blank_wiring(dummy_df, dummy_blank_df):
     
     mock_baseline.run.return_value = {
         "baselined_spectra": baselined_original,  # ← This should be used for blank subtraction
-        "baselined_spectra_stitched_normalized":  baselined_normalized,
         "original_spectra": dummy_df. copy(),
         "background_spectra": dummy_df.copy()
     }
@@ -124,7 +122,7 @@ def test_pipeline_with_blank_wiring(dummy_df, dummy_blank_df):
 def test_pipeline_blank_uses_original_not_normalized(dummy_df, dummy_blank_df):
     """
     REGRESSION TEST: Explicitly verify that blank subtraction uses 
-    'baselined_spectra' and not 'baselined_spectra_stitched_normalized'. 
+    'baselined_spectra'. 
     
     This is the key difference from Amir's original implementation. 
     """
@@ -141,7 +139,6 @@ def test_pipeline_blank_uses_original_not_normalized(dummy_df, dummy_blank_df):
     
     mock_baseline.run.return_value = {
         "baselined_spectra": baselined_original,
-        "baselined_spectra_stitched_normalized": baselined_normalized,
         "original_spectra": dummy_df,
         "background_spectra":  dummy_df
     }
@@ -160,7 +157,7 @@ def test_pipeline_blank_uses_original_not_normalized(dummy_df, dummy_blank_df):
         # Check that the passed dataframe has the ORIGINAL values, not normalized
         assert called_with["sample_1"]. iloc[0] == pytest.approx(0.05, abs=0.01), (
             "BlankProcessor.subtract() should receive 'baselined_spectra' "
-            "(original absorbance scale), not 'baselined_spectra_stitched_normalized'"
+            "(original absorbance scale)"
         )
 
 
@@ -189,7 +186,6 @@ def test_validate_blank_df_columns(dummy_df):
     # Return both required keys
     mock_baseline.run.return_value = {
         "baselined_spectra":  dummy_df.copy(),
-        "baselined_spectra_stitched_normalized": dummy_df.copy()
     }
     
     pipeline = FTIRPipeline(baseline=mock_baseline)
@@ -206,7 +202,6 @@ def test_validate_blank_df_absorbance_column(dummy_df):
     mock_baseline = MagicMock()
     mock_baseline.run.return_value = {
         "baselined_spectra": dummy_df.copy(),
-        "baselined_spectra_stitched_normalized":  dummy_df.copy()
     }
     
     pipeline = FTIRPipeline(baseline=mock_baseline)

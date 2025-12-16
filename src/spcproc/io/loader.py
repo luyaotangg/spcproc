@@ -54,3 +54,39 @@ def load_blank_df(df: pd.DataFrame, source=None) -> pd.DataFrame:
 def save_spectra_csv(df: pd.DataFrame, filename: str, use_data_dir: bool = False) -> None:
     path = DATA_DIR / filename if use_data_dir else Path(filename)
     df.to_csv(path, index=False)
+
+
+# User-facing convenience APIs
+def load_example_data():
+    """
+    Load example sample and blank spectra shipped with the package.
+    Intended for quick start and minimal working examples.
+    """
+    sample = load_sample_csv("sample_spectra.csv", use_data_dir=True)
+    blank  = load_blank_csv("blank_spectra.csv",  use_data_dir=True)
+    return sample, blank
+
+
+def load_from_files(sample_path: PathLike, blank_path: PathLike):
+    """
+    Load user-provided sample and blank spectra files.
+    """
+    try:
+        sample = load_sample_csv(sample_path)
+    except Exception as e:
+        raise ValueError(
+            f"Failed to load sample file '{sample_path}'. "
+            "Please check that it contains a 'Wavenumber' column "
+            "and one or more sample spectra columns."
+        ) from e
+
+    try:
+        blank = load_blank_csv(blank_path)
+    except Exception as e:
+        raise ValueError(
+            f"Failed to load blank file '{blank_path}'. "
+            "Please check that it contains a 'Wavenumber' column "
+            "and exactly one absorbance column."
+        ) from e
+
+    return sample, blank

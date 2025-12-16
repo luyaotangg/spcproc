@@ -1,3 +1,19 @@
+"""
+Reference reproduction / diagnostic script for spcproc.
+
+This script runs the pipeline on Amir's PSI reference dataset in data/reference/
+and exports intermediate processing steps (CSV + plots) for validation and debugging.
+
+Intended audience:
+- Developers / maintainers
+- Method validation against the original R workflow
+- Generating figures and step-by-step outputs for the report/appendix
+
+Usage:
+    python scripts/run_reference.py
+"""
+
+
 from pathlib import Path
 import pandas as pd
 import numpy as np
@@ -9,20 +25,22 @@ from spcproc.config import BaselineConfig, BlankConfig
 
 
 DATA_DIR = Path("data")
-OUT_DIR = Path("py_steps")   # Output path
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+OUT_DIR = PROJECT_ROOT / "data" / "reference" / "output"
+OUT_DIR.mkdir(parents=True, exist_ok=True)  # Output path
 
 OUT_DIR.mkdir(exist_ok=True, parents=True)
 
 
 def plot_step(
-    df: pd.DataFrame,
+    df:  pd.DataFrame,
     outdir: Path,
     filename: str,
     title: str,
     cols=None,
     xlim=(4000, 400),
     ylim=None,
-    y_label: str = "Absorbance",
+    y_label:  str = "Absorbance",
 ):
     if "Wavenumber" not in df.columns:
         raise ValueError("DataFrame must contain 'Wavenumber' column.")
@@ -32,12 +50,12 @@ def plot_step(
 
     if cols is None:
         all_cols = [c for c in df.columns if c != "Wavenumber"]
-        cols = all_cols[: min(5, len(all_cols))]
+        cols = all_cols[:  min(5, len(all_cols))]
     if not cols:
         return
 
     plt.figure(figsize=(7, 4))
-    x = df["Wavenumber"].values
+    x = df["Wavenumber"]. values
 
     for col in cols:
         y = df[col].values
@@ -51,7 +69,7 @@ def plot_step(
     if xlim is not None:
         plt.xlim(*xlim)
     if ylim is not None:
-        plt.ylim(*ylim)
+        plt. ylim(*ylim)
 
     plt.legend(loc="best", fontsize=8)
     plt.tight_layout()
@@ -65,7 +83,7 @@ def main():
     scenario_dir = OUT_DIR / scenario_name
     scenario_dir.mkdir(exist_ok=True, parents=True)
 
-    psi_raw = pd.read_csv(DATA_DIR / "FTIR_raw_spectra.csv")
+    psi_raw = pd.read_csv(DATA_DIR / "reference/FTIR_raw_spectra.csv")
 
     # Step 01: raw PSI spectrum
     psi_raw.to_csv(
@@ -86,11 +104,10 @@ def main():
     zero_shifted = base_result["original_spectra"]
     background = base_result["background_spectra"]
     baselined = base_result["baselined_spectra"]
-    baselined_norm = base_result["baselined_spectra_stitched_normalized"]
 
-    # Step 02–05：Write CSV and plot
+    # Step 02–04：Write CSV and plot
     zero_shifted.to_csv(
-        scenario_dir / f"step02_zero_shifted_spectra_{scenario_name}.csv",
+        scenario_dir / f"step02_zero_shifted_spectra_{scenario_name}. csv",
         index=False,
     )
     background.to_csv(
@@ -99,10 +116,6 @@ def main():
     )
     baselined.to_csv(
         scenario_dir / f"step04_baselined_spectra_stitched_{scenario_name}.csv",
-        index=False,
-    )
-    baselined_norm.to_csv(
-        scenario_dir / f"step05_baselined_spectra_normalized_{scenario_name}.csv",
         index=False,
     )
 
@@ -122,20 +135,13 @@ def main():
         df=baselined,
         outdir=scenario_dir,
         filename=f"step04_baselined_spectra_stitched_{scenario_name}.png",
-        title=f"Step 04 ({scenario_name}): Baselined spectra (stitched, not normalized)",
+        title=f"Step 04 ({scenario_name}): Baselined spectra (stitched)",
         ylim=(-0.025, 0.08),
     )
-    plot_step(
-        df=baselined_norm,
-        outdir=scenario_dir,
-        filename=f"step05_baselined_spectra_normalized_{scenario_name}.png",
-        title=f"Step 05 ({scenario_name}): Baselined + 2-norm normalized spectra",
-        ylim=(-0.5, 2),
-    )
 
-
+    # Blank processing starts here
     blank_raw = pd.read_csv(
-        DATA_DIR / "Blank_baselinecorrected_filter_spectrum.csv"
+        DATA_DIR / "reference/Blank_baselinecorrected_filter_spectrum.csv"
     )
 
     blank_cfg = BlankConfig()
@@ -143,74 +149,74 @@ def main():
 
     blank_proc = bp.blank_processed
     high = bp.high_blank
-    low = bp.low_blank
+    low = bp. low_blank
     mid = bp.mid_blank
 
-    # Step 07–10：Write CSV and plot
+    # Step 05–08：Write CSV and plot
     blank_proc.to_csv(
-        scenario_dir / f"step07_blank_processed_{scenario_name}.csv",
+        scenario_dir / f"step05_blank_processed_{scenario_name}.csv",
         index=False,
     )
     high.to_csv(
-        scenario_dir / f"step08_blank_region_high_{scenario_name}.csv",
+        scenario_dir / f"step06_blank_region_high_{scenario_name}.csv",
         index=False,
     )
     low.to_csv(
-        scenario_dir / f"step09_blank_region_low_{scenario_name}.csv",
+        scenario_dir / f"step07_blank_region_low_{scenario_name}.csv",
         index=False,
     )
     mid.to_csv(
-        scenario_dir / f"step10_blank_region_middle_{scenario_name}.csv",
+        scenario_dir / f"step08_blank_region_middle_{scenario_name}.csv",
         index=False,
     )
 
     plot_step(
         df=blank_proc,
         outdir=scenario_dir,
-        filename=f"step07_blank_processed_{scenario_name}.png",
-        title=f"Step 07 ({scenario_name}): Processed blank spectrum",
+        filename=f"step05_blank_processed_{scenario_name}.png",
+        title=f"Step 05 ({scenario_name}): Processed blank spectrum",
         cols=["absorbance"],
         y_label="Absorbance",
     )
     plot_step(
         df=high,
         outdir=scenario_dir,
-        filename=f"step08_blank_region_high_{scenario_name}.png",
-        title=f"Step 08 ({scenario_name}): Blank – high region (>2500 cm$^{{-1}}$)",
+        filename=f"step06_blank_region_high_{scenario_name}.png",
+        title=f"Step 06 ({scenario_name}): Blank – high region (>2500 cm$^{{-1}}$)",
         cols=["absorbance"],
         y_label="Absorbance",
     )
     plot_step(
         df=low,
         outdir=scenario_dir,
-        filename=f"step09_blank_region_low_{scenario_name}.png",
-        title=f"Step 09 ({scenario_name}): Blank – low region (<=810 cm$^{{-1}}$)",
+        filename=f"step07_blank_region_low_{scenario_name}.png",
+        title=f"Step 07 ({scenario_name}): Blank – low region (<=810 cm$^{{-1}}$)",
         cols=["absorbance"],
         y_label="Absorbance",
     )
     plot_step(
         df=mid,
         outdir=scenario_dir,
-        filename=f"step10_blank_region_middle_{scenario_name}.png",
-        title=f"Step 10 ({scenario_name}): Blank – middle region (810–2500 cm$^{{-1}}$)",
+        filename=f"step08_blank_region_middle_{scenario_name}.png",
+        title=f"Step 08 ({scenario_name}): Blank – middle region (810–2500 cm$^{{-1}}$)",
         cols=["absorbance"],
         y_label="Absorbance",
     )
 
-    # Step 11：blank subtraction
+    # Step 09：blank subtraction
     final = bp.subtract(baselined)
 
     final.to_csv(
         scenario_dir
-        / f"step11_final_baselined_spectra_after_blanksub_{scenario_name}.csv",
+        / f"step09_final_baselined_spectra_after_blanksub_{scenario_name}.csv",
         index=False,
     )
 
     plot_step(
         df=final,
         outdir=scenario_dir,
-        filename=f"step11_final_baselined_after_blanksub_{scenario_name}.png",
-        title=f"Step 11 ({scenario_name}): Final spectra after blank subtraction",
+        filename=f"step09_final_baselined_after_blanksub_{scenario_name}.png",
+        title=f"Step 09 ({scenario_name}): Final spectra after blank subtraction",
         ylim=(-0.01, 0.06),
     )
 

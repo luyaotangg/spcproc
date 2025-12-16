@@ -160,23 +160,10 @@ def baseline_corrector_core(
             baselined_stitched.loc[high_mask, sample_cols] = baselined_tmp.loc[high_mask, sample_cols]
             background_stitched.loc[high_mask, sample_cols] = background_tmp.loc[high_mask, sample_cols]
 
-    # 2-norm normalization (based on region > 1330)
-    df_norm = baselined_stitched.copy()
-    data_for_norm = df_norm.loc[df_norm["Wavenumber"] > 1330]
-
-    numeric_cols = [c for c in df_norm.columns if c != "Wavenumber"]
-    norms = np.sqrt((data_for_norm[numeric_cols] ** 2).sum(axis=0))
-
-    # Avoid broadcasting issues by making a series
-    stats_vec = pd.Series([1.0] + norms.tolist(), index=df_norm.columns)
-    baselined_norm = df_norm / stats_vec
-    baselined_norm["Wavenumber"] = df_norm["Wavenumber"]
-
     return {
         "original_spectra": MyData,
         "background_spectra": background_stitched,
         "baselined_spectra": baselined_stitched,
-        "baselined_spectra_stitched_normalized": baselined_norm,
     }
 
 

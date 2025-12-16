@@ -5,3 +5,7 @@ __pycache__/
 .DS_Store
 venv/
 .env
+*.egg-info/
+.coverage
+htmlcov
+scripts/make_example_data.py

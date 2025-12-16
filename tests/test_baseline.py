@@ -154,8 +154,7 @@ def test_baseline_corrector_full_run(sample_spectra, config):
     required_keys = [
         "original_spectra", 
         "background_spectra", 
-        "baselined_spectra", 
-        "baselined_spectra_stitched_normalized"
+        "baselined_spectra",
     ]
     
     for key in required_keys:
@@ -165,17 +164,6 @@ def test_baseline_corrector_full_run(sample_spectra, config):
         assert df.shape == sample_spectra.shape
         assert not df.isnull().values.any()
 
-    # Check normalization logic specifically
-    # Norm is calculated on wn > 1330. 
-    # Since our synthetic data is roughly constant magnitude, the norm values should be reasonable.
-    norm_df = results["baselined_spectra_stitched_normalized"]
-    raw_df = results["baselined_spectra"]
-    
-    # Pick a point > 1330
-    idx = norm_df["Wavenumber"] > 1330
-    # Values in normed df should be scaled down compared to raw df
-    # (assuming the norm factor > 1, which it usually is for absorbance)
-    assert np.mean(norm_df.loc[idx, "Sample1"]) < np.mean(raw_df.loc[idx, "Sample1"])
 
 def test_implicit_config_defaults(sample_spectra):
     """Test that the class handles missing config by loading defaults."""
