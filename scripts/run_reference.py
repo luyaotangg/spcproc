@@ -107,7 +107,7 @@ def main():
 
     # Step 02–04：Write CSV and plot
     zero_shifted.to_csv(
-        scenario_dir / f"step02_zero_shifted_spectra_{scenario_name}. csv",
+        scenario_dir / f"step02_zero_shifted_spectra_{scenario_name}.csv",
         index=False,
     )
     background.to_csv(
